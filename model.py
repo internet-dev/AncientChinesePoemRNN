@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 
 class Model():
-    def __init__(self, args,infer=False):
+    def __init__(self, args, infer=False):
         self.args = args
         if infer:
             args.batch_size = 1
@@ -18,9 +18,9 @@ class Model():
         else:
             raise Exception("model type not supported: {}".format(args.model))
 
-        cell = cell_fn(args.rnn_size,state_is_tuple=False)
+        cell = cell_fn(args.rnn_size, state_is_tuple=False)
 
-        self.cell = cell = tf.contrib.rnn.MultiRNNCell([cell] * args.num_layers,state_is_tuple=False)
+        self.cell = cell = tf.contrib.rnn.MultiRNNCell([cell] * args.num_layers, state_is_tuple=False)
 
         self.input_data = tf.placeholder(tf.int32, [args.batch_size, None])
         # the length of input sequence is variable.
@@ -34,14 +34,14 @@ class Model():
                 embedding = tf.get_variable("embedding", [args.vocab_size, args.rnn_size])
                 inputs = tf.nn.embedding_lookup(embedding, self.input_data)
 
-        outputs, last_state = tf.nn.dynamic_rnn(cell,inputs,initial_state=self.initial_state,scope='rnnlm')
-        output = tf.reshape(outputs,[-1, args.rnn_size])
+        outputs, last_state = tf.nn.dynamic_rnn(cell, inputs,initial_state=self.initial_state, scope='rnnlm')
+        output = tf.reshape(outputs, [-1, args.rnn_size])
         self.logits = tf.matmul(output, softmax_w) + softmax_b
         self.probs = tf.nn.softmax(self.logits)
         targets = tf.reshape(self.targets, [-1])
         loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example([self.logits],
                 [targets],
-                [tf.ones_like(targets,dtype=tf.float32)],
+                [tf.ones_like(targets, dtype=tf.float32)],
                 args.vocab_size)
         self.cost = tf.reduce_mean(loss)
         self.final_state = last_state
@@ -60,7 +60,7 @@ class Model():
             else:
                 t = np.cumsum(weights)
                 s = np.sum(weights)
-                sample = int(np.searchsorted(t, np.random.rand(1)*s))
+                sample = int(np.searchsorted(t, np.random.rand(1) * s))
             return chars[sample]
         for char in prime:
             if char not in vocab:
@@ -70,29 +70,29 @@ class Model():
             state = self.cell.zero_state(1, tf.float32).eval()
             prime = u'^'
             result = u''
-            x = np.array([list(map(vocab.get,prime))])
-            [probs,state] = sess.run([self.probs,self.final_state],{self.input_data: x,self.initial_state: state})
+            x = np.array([list(map(vocab.get, prime))])
+            [probs, state] = sess.run([self.probs, self.final_state], {self.input_data: x, self.initial_state: state})
             char = pick_char(probs[-1])
             while char != u'$':
                 result += char
-                x = np.zeros((1,1))
+                x = np.zeros((1, 1))
                 x[0,0] = vocab[char]
-                [probs,state] = sess.run([self.probs,self.final_state],{self.input_data: x,self.initial_state: state})
+                [probs, state] = sess.run([self.probs, self.final_state], {self.input_data: x, self.initial_state: state})
                 char = pick_char(probs[-1])
             return result
         else:
             result = u'^'
             for prime_char in prime:
                 result += prime_char
-                x = np.array([list(map(vocab.get,result))])
+                x = np.array([list(map(vocab.get, result))])
                 state = self.cell.zero_state(1, tf.float32).eval()
-                [probs,state] = sess.run([self.probs,self.final_state],{self.input_data: x,self.initial_state: state})
+                [probs, state] = sess.run([self.probs, self.final_state], {self.input_data: x, self.initial_state: state})
                 char = pick_char(probs[-1])
                 while char != u'，' and char != u'。':
                     result += char
                     x = np.zeros((1,1))
                     x[0,0] = vocab[char]
-                    [probs,state] = sess.run([self.probs,self.final_state],{self.input_data: x,self.initial_state: state})
+                    [probs, state] = sess.run([self.probs, self.final_state], {self.input_data: x, self.initial_state: state})
                     char = pick_char(probs[-1])
                 result += char
             return result[1:]
