@@ -46,18 +46,28 @@ class TextLoader():
         with codecs.open(input_file, "r", encoding=self.encoding) as f:
             lines = list(map(handle_poem, f.read().strip().split('\n')))
 
-        counter = collections.Counter(reduce(lambda data,line: line + data, lines, ''))
+        # 统计单个字出现的频率,计算出来后是个字典
+        counter = collections.Counter(reduce(lambda data, line: line + data, lines, ''))
+        # 转成list,每个元素是(单字, 频率)的元组
         count_pairs = sorted(counter.items(), key=lambda x: -x[1])
+        # 所有单字的集合
         chars, _ = zip(*count_pairs)
+        # 词库的长度,给未知字符留有一个占位符
         self.vocab_size = min(len(chars), self.max_vocabsize - 1) + 1
-        self.chars = chars[:self.vocab_size-1] + (UNKNOWN_CHAR,)
+        # 词库中所有词的集合,包含一个特殊字符
+        self.chars = chars[:self.vocab_size - 1] + (UNKNOWN_CHAR,)
+        # 按词在 `self.chars` 集合中出现的顺序编号并存入字典
         self.vocab = dict(zip(self.chars, range(len(self.chars))))
+        # 未知词的编号
         unknown_char_int = self.vocab.get(UNKNOWN_CHAR)
         with open(vocab_file, 'wb') as f:
             cPickle.dump(self.chars, f)
+
         get_int = lambda char: self.vocab.get(char, unknown_char_int)
-        lines = sorted(lines,key=lambda line: len(line))
-        self.tensor = [ list(map(get_int, line)) for line in lines ]
+        # 对输入排序
+        lines = sorted(lines, key=lambda line: len(line))
+        # 生成每个输入序列的张量
+        self.tensor = [list(map(get_int, line)) for line in lines]
         with open(tensor_file, 'wb') as f:
             cPickle.dump(self.tensor, f)
 
