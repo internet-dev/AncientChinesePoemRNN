@@ -75,7 +75,7 @@ class Model():
                 return u"{} is not in charset!".format(char)
 
         if not prime:
-            state = self.cell.zero_state(1, tf.float32).eval()
+            state = tf.get_default_session().run(self.cell.zero_state(1, tf.float32))
             prime = u'^'
             result = u''
             x = np.array([list(map(vocab.get, prime))])
