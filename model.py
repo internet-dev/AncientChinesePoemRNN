@@ -6,6 +6,7 @@ import numpy as np
 class Model():
     def __init__(self, args, infer=False):
         self.args = args
+
         if infer:
             args.batch_size = 1
 
@@ -18,13 +19,16 @@ class Model():
         else:
             raise Exception("model type not supported: {}".format(args.model))
 
-        cell = cell_fn(args.rnn_size, state_is_tuple=False)
-
-        self.cell = cell = tf.contrib.rnn.MultiRNNCell([cell] * args.num_layers, state_is_tuple=False)
-
+        # 选择神经元方法
+        cell = cell_fn(args.rnn_size, state_is_tuple=True)
+        # 创建神经元
+        self.cell = cell = tf.contrib.rnn.MultiRNNCell([cell] * args.num_layers, state_is_tuple=True)
+        # 定义输入数据,维度是 batch_size * ?
         self.input_data = tf.placeholder(tf.int32, [args.batch_size, None])
         # the length of input sequence is variable.
+        # 目标数据
         self.targets = tf.placeholder(tf.int32, [args.batch_size, None])
+        # 初始化状态
         self.initial_state = cell.zero_state(args.batch_size, tf.float32)
 
         with tf.variable_scope('rnnlm'):
@@ -34,17 +38,21 @@ class Model():
                 embedding = tf.get_variable("embedding", [args.vocab_size, args.rnn_size])
                 inputs = tf.nn.embedding_lookup(embedding, self.input_data)
 
-        outputs, last_state = tf.nn.dynamic_rnn(cell, inputs,initial_state=self.initial_state, scope='rnnlm')
+        outputs, last_state = tf.nn.dynamic_rnn(cell, inputs, initial_state=self.initial_state, scope='rnnlm')
         output = tf.reshape(outputs, [-1, args.rnn_size])
+
         self.logits = tf.matmul(output, softmax_w) + softmax_b
-        self.probs = tf.nn.softmax(self.logits)
+        self.probs  = tf.nn.softmax(self.logits)
+
         targets = tf.reshape(self.targets, [-1])
+        # 定义损失函数
         loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example([self.logits],
                 [targets],
                 [tf.ones_like(targets, dtype=tf.float32)],
                 args.vocab_size)
         self.cost = tf.reduce_mean(loss)
         self.final_state = last_state
+        # 定义学习速率
         self.lr = tf.Variable(0.0, trainable=False)
         tvars = tf.trainable_variables()
         grads, _ = tf.clip_by_global_norm(tf.gradients(self.cost, tvars),
