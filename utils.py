@@ -80,7 +80,9 @@ class TextLoader():
         self.vocab = dict(zip(self.chars, range(len(self.chars))))
 
     def create_batches(self):
+        # 批次总数 = 总张量数 / 每批次个数
         self.num_batches = int(len(self.tensor) / self.batch_size)
+        # 剔除掉无法形成批次的多富余出来的数据
         self.tensor = self.tensor[:self.num_batches * self.batch_size]
         unknown_char_int = self.vocab.get(UNKNOWN_CHAR)
 
@@ -90,12 +92,16 @@ class TextLoader():
         for i in range(self.num_batches):
             from_index = i * self.batch_size
             to_index = from_index + self.batch_size
-            batches = self.tensor[from_index:to_index]
+            batches  = self.tensor[from_index:to_index]
+            # 取本批次中最长序列的长度
             seq_length = max(map(len, batches))
+            # 生成一个 batch_size * seq_length 的矩阵,并填充为未知字符的向量值
             xdata = np.full((self.batch_size, seq_length), unknown_char_int, np.int32)
             for row in range(self.batch_size):
+                # 用真实的数据填充
                 xdata[row,:len(batches[row])] = batches[row]
             ydata = np.copy(xdata)
+            # 矩阵行不变,去掉第一列,重复最后一列
             ydata[:,:-1] = xdata[:,1:]
 
             self.x_batches.append(xdata)
