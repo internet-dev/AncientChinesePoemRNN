@@ -61,7 +61,7 @@ class Model():
         self.train_op = optimizer.apply_gradients(zip(grads, tvars))
 
     def sample(self, sess, chars, vocab, prime=u'', sampling_type=1):
-
+        # 通过`weights`选择一个词
         def pick_char(weights):
             if sampling_type == 0:
                 sample = np.argmax(weights)
@@ -69,7 +69,9 @@ class Model():
                 t = np.cumsum(weights)
                 s = np.sum(weights)
                 sample = int(np.searchsorted(t, np.random.rand(1) * s))
+
             return chars[sample]
+
         for char in prime:
             if char not in vocab:
                 return u"{} is not in charset!".format(char)
