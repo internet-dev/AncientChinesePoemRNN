@@ -75,7 +75,6 @@ def train(args):
         assert saved_chars == data_loader.chars, "Data and loaded model disagree on character set!"
         assert saved_vocab == data_loader.vocab, "Data and loaded model disagree on dictionary mappings!"
 
-
     # 保存本次的运行配置
     with open(os.path.join(args.save_dir, 'config.pkl'), 'wb') as f:
         cPickle.dump(args, f)
@@ -112,6 +111,7 @@ def train(args):
                 feed = {model.input_data: x, model.targets: y}
                 train_loss, _ , _ = sess.run([model.cost, model.final_state, model.train_op], feed)
                 end = time.time()
+
                 sys.stdout.write('\r')
                 info = "{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
                     .format(e * data_loader.num_batches + b,
@@ -119,15 +119,17 @@ def train(args):
                             e, train_loss, end - start)
                 sys.stdout.write(info)
                 sys.stdout.flush()
+
                 losses.append(train_loss)
-                if (e * data_loader.num_batches + b) % args.save_every == 0\
-                    or (e==args.num_epochs-1 and b == data_loader.num_batches-1): # save for the last result
+
+                if (e * data_loader.num_batches + b + 1) % args.save_every == 0\
+                    or (e == args.num_epochs - 1 and b == data_loader.num_batches - 1): # save for the last result
                     checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step = iterations)
-                    with open(os.path.join(args.save_dir,"iterations"),'wb') as f:
-                        cPickle.dump(iterations,f)
-                    with open(os.path.join(args.save_dir,"losses-"+str(iterations)),'wb') as f:
-                        cPickle.dump(losses,f)
+                    with open(os.path.join(args.save_dir, "iterations"), 'wb') as f:
+                        cPickle.dump(iterations, f)
+                    with open(os.path.join(args.save_dir, "losses-" + str(iterations)), 'wb') as f:
+                        cPickle.dump(losses, f)
                     losses = []
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
@@ -135,3 +137,4 @@ def train(args):
 
 if __name__ == '__main__':
     main()
+

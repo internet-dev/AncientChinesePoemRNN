@@ -5,7 +5,8 @@
 
 ## 准备环境
 
-tensorflow
+- tensorflow1.0
+- python3
 
 ## 训练
 `python train.py`
