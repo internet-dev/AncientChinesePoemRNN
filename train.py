@@ -113,10 +113,10 @@ def train(args):
                 end = time.time()
 
                 sys.stdout.write('\r')
-                info = "{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
+                info = "{}/{} (epoch {}), train_loss = {:.3f}, iterations = {} time/batch = {:.3f}" \
                     .format(e * data_loader.num_batches + b,
                             args.num_epochs * data_loader.num_batches,
-                            e, train_loss, end - start)
+                            e, train_loss, iterations, end - start)
                 sys.stdout.write(info)
                 sys.stdout.flush()
 
