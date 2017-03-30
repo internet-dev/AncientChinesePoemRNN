@@ -95,7 +95,7 @@ class Model():
             for prime_char in prime:
                 result += prime_char
                 x = np.array([list(map(vocab.get, result))])
-                state = self.cell.zero_state(1, tf.float32).eval()
+                state = tf.get_default_session().run(self.cell.zero_state(1, tf.float32))
                 [probs, state] = sess.run([self.probs, self.final_state], {self.input_data: x, self.initial_state: state})
                 char = pick_char(probs[-1])
                 while char != u'，' and char != u'。':
